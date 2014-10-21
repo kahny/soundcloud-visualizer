@@ -1,0 +1,242 @@
+<html>
+	<head>
+		<script src="http://connect.soundcloud.com/sdk.js"></script>
+		<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js" ></script>
+		<link rel="stylesheet" type="text/css" href="./css/style.css">
+		<script type="text/javascript" src="./js/paper.js"></script>
+		<link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+		<link href='http://fonts.googleapis.com/css?family=Grand+Hotel' rel='stylesheet' type='text/css'>
+		 <style>
+			h1{
+				font-family: 'Grand Hotel', cursive;
+				color:white;
+				margin: 0.5em 1em;
+				font-size: 4em;
+			}
+			.select{
+				margin: 0em 4em;
+			}
+    </style>
+
+
+		<script type="text/paperscript" canvas="canvas3" >
+
+		var SoundCloudAudioSource = function(audioElement) {
+		    var player = document.getElementById(audioElement); //to grab that audio tag with the id passed through function
+		    var self = this; //for scope
+		    var analyser;
+
+		    //audiocontext interface represents an audio-processing graph built from audio modules linked together, each represented by an AudioNode. The webkit because it's not been standardized accross browsers yet.
+		    var audioCtx = new (window.AudioContext || window.webkitAudioContext);
+
+		    //create analyser makes an analysernode that is used to expose audio time and frequency data, fft is used to determine frequency (has to be power of 2)
+		    analyser = audioCtx.createAnalyser();
+		    analyser.fftSize = 256;
+		    bufferLength = analyser.frequencyBinCount //unsigned value that is half of the FFT size, generally equates to number of data values you will have to play with visualization.
+
+		    //This node is then connected to your audio source:
+		    var source = audioCtx.createMediaElementSource(player); // this is where we hook up the <audio> element
+		    source.connect(analyser);
+		    analyser.connect(audioCtx.destination);
+
+
+		    var sampleAudioStream = function() {
+		        // This gets called with the setInterval below which continuously samples from the audio data
+		        // and updates the streamData1 and volume properties. The SoundCouldAudioSource function is passed to a visualization routine.
+		        analyser.getByteFrequencyData(self.streamData1);
+		    };
+		    setInterval(sampleAudioStream, 20);
+		    // public properties and methods
+		    this.volume = 0;
+		    this.streamData1 = new Uint8Array(bufferLength); // This just means we will have 128 "bins" (always half the analyzer.fftsize value), each containing a number between 0 and 255.
+
+		    this.playStream = function(streamUrl) {
+		        // get the input stream from the audio element
+		        SC.initialize({
+		      client_id: 'ba035e36f9a62aad4c3774144aec6824'
+		    });
+		        player.setAttribute('src', streamUrl);
+		        player.play();
+		    }
+		}; //end SoundCloudAudioSource
+
+		var audioSource = new SoundCloudAudioSource('player');
+
+		//declaring variables outside of the draw function
+		var avgvolume;
+		var shape;
+		var strokeColor;
+		var color;
+
+		var draw = function() {
+	    // you can then access all the frequency and volume data and use it to draw whatever you like on your canvas. streamdata is now 128 bins for different frequencies and each bin has a certain volume.
+
+	    var totalvolume = 0
+
+	    for(bin = 0; bin < audioSource.streamData1.length; bin ++) {
+	        // loop through and get the volume from each bin(frequency), add it to the total for the total volume
+	        var val = audioSource.streamData1[bin];
+	        totalvolume = val + totalvolume
+	        // console.log("audiosource", audioSource.streamData1.length)
+	    }
+
+	    var binlength = audioSource.streamData1.length;
+	    avgvolume = totalvolume/(binlength)
+	    shape = document.getElementById("foo").value;
+	    color = document.getElementById("color").value;
+
+	    requestAnimationFrame(draw); //calls itself, for some reason works on line 81 as well
+		};
+
+		//holding off on playing the song until button is clicked. need to repalace this with actual player
+		var play = function(){
+      var permalink_url = document.getElementById('soundCloudLink').value  // try to convert permalink url to stream_url convert
+      var stream_url
+      var link = 'https://api.soundcloud.com/resolve.json?url=' + permalink_url+'?client_id=ba035e36f9a62aad4c3774144aec6824'
+      console.log(link)
+      $.getJSON(link, function(track){
+        var stream_url = track.stream_url + "?client_id=ba035e36f9a62aad4c3774144aec6824"
+        console.log(stream_url)
+        });
+
+      audioSource.playStream(stream_url); //https://api.soundcloud.com/tracks/41034932/stream?client_id=ba035e36f9a62aad4c3774144aec6824
+    }
+
+		var buttonpushed = document.getElementById('play')
+		buttonpushed.onclick = play
+
+		draw();
+
+
+
+
+		//shape parameters
+		var rectanglePath = new Path.Rectangle({
+			point: [300, 200],
+			size: [400, 200],
+		});
+
+		var rectanglePath2 = new Path.Rectangle({
+			point: [800, 150],
+			size: [300, 50],
+		});
+
+
+		var squarePath = new Path.Rectangle({
+			point: [300, 120],
+			size: [300, 300],
+		});
+
+		var squarePath2 = new Path.Rectangle({
+			point: [800, 100],
+			size: [200, 200],
+		})
+
+		var trianglePath = new Path.RegularPolygon(new Point(300, 250), 3, 200);
+		var trianglePath2 = new Path.RegularPolygon(new Point(900, 320), 3, 80);
+		var trianglePath3 = new Path.RegularPolygon(new Point(900, 300), 3, 250);
+
+
+		var scaleOut = false
+function onFrame(event) {
+
+	//extra code to add in if we are changing the scale of the shapes
+	// var scaleFactor = avgvolume/10;
+	// if(scaleOut){
+	// 	path.scale(scaleFactor);
+	// 	scaleOut = false
+	// } else {
+	// 	path.scale(1/scaleFactor)
+	// 	scaleOut = true
+	// }
+	// console.log("blah")
+	// console.log(shape)
+
+	//visibility of shapes
+
+	if(shape=="Rectangle"){
+		trianglePath.visible=false;
+		trianglePath2.visible=false;
+		trianglePath3.visible=false;
+		squarePath.visible = false;
+		squarePath2.visible = false;
+
+		rectanglePath.visible = true;
+		rectanglePath2.visible= true;
+		rectanglePath.strokeColor= color
+		rectanglePath2.strokeColor= color
+	}
+
+	else if(shape=="Square"){
+		trianglePath.visible=false;
+		trianglePath2.visible=false;
+		trianglePath3.visible=false;
+		rectanglePath.visible = false;
+		rectanglePath2.visible= false;
+
+		squarePath.visible = true;
+		squarePath2.visible= true;
+		squarePath.strokeColor= color
+		squarePath2.strokeColor= color
+	}
+
+	else{
+		rectanglePath.visible = false;
+		rectanglePath2.visible= false;
+		squarePath.visible = false;
+		squarePath2.visible = false;
+
+		trianglePath.visible=true;
+		trianglePath.strokeColor= color
+		trianglePath2.visible=true;
+		trianglePath2.strokeColor= color
+		trianglePath3.visible=true;
+		trianglePath3.strokeColor= color
+
+	}
+
+	//rotation speeds
+
+	rectanglePath.rotate(avgvolume*0.2);
+	rectanglePath2.rotate(avgvolume*0.2);
+	squarePath.rotate(avgvolume*0.5);
+	squarePath2.rotate(avgvolume*0.3);
+	trianglePath.rotate(avgvolume*0.04)
+	trianglePath2.rotate(avgvolume*0.04)
+	trianglePath3.rotate(avgvolume*0.01)
+}
+	</script>
+	<!-- end to paperscript -->
+	</head>
+
+	<body>
+
+		<h1>Shape Visualizer</h1>
+		<form>
+			<input type="text" placeholder="place SoundCloud link here" id="soundCloudLink"></input>
+		</form>
+		<div class = "select">
+			<select id="foo">
+	    	<option value="Square">Square</option>
+	    	<option value="Triangle">Triangle</option>
+	    	<option value="Rectangle">Rectangle</option>
+			</select>
+
+			<select id="color">
+				<option value="White">White</option>
+	    	<option value="Cyan">Cyan</option>
+	    	<option value="Magenta">Magenta</option>
+	    	<option value="Yellow">Yellow</option><!--
+	    	<option value="colorchanging">Rainbow</option> -->
+			</select>
+		</select>
+		<input type="button" id = "play" value="Play">
+
+
+		<canvas id="canvas3" width="1500" height="1000"></canvas>
+		<br>
+
+		<audio id="player"></audio>
+
+	</body>
+</html>
