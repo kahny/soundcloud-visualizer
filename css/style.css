@@ -4,7 +4,10 @@ body{
 }
 
 h1{
-	margin: 500em 100em;
+	/*margin: 500em 100em;*/
+}
+form{
+  margin-left: 40px;
 }
 
 /*

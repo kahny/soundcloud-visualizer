@@ -50,6 +50,8 @@
 		    this.volume = 0;
 		    this.streamData1 = new Uint8Array(bufferLength); // This just means we will have 128 "bins" (always half the analyzer.fftsize value), each containing a number between 0 and 255.
 
+
+		    //play
 		    this.playStream = function(streamUrl) {
 		        // get the input stream from the audio element
 		        SC.initialize({
@@ -58,6 +60,7 @@
 		        player.setAttribute('src', streamUrl);
 		        player.play();
 		    }
+
 		}; //end SoundCloudAudioSource
 
 		var audioSource = new SoundCloudAudioSource('player');
@@ -92,25 +95,25 @@
 		var play = function(){
       var permalink_url = document.getElementById('soundCloudLink').value  // try to convert permalink url to stream_url convert
       var stream_url
-      var link = 'https://api.soundcloud.com/resolve.json?url=' + permalink_url+'?client_id=ba035e36f9a62aad4c3774144aec6824'
-      console.log(link)
+      // var link2 = 'http://api.soundcloud.com/resolve.json?url=http://soundcloud.com/matas/hobnotropic&client_id=YOUR_CLIENT_ID'
+      var link = 'https://api.soundcloud.com/resolve.json?url=' + permalink_url+'&client_id=ba035e36f9a62aad4c3774144aec6824'
       $.getJSON(link, function(track){
-        var stream_url = track.stream_url + "?client_id=ba035e36f9a62aad4c3774144aec6824"
-        console.log(stream_url)
-        });
+      	console.log(link)
+      	console.log(track)
+        stream_url = track.stream_url + "?client_id=ba035e36f9a62aad4c3774144aec6824"
+        console.log("stream_url", stream_url)
+        audioSource.playStream(stream_url);  //has to be in here, can't reference stream_url below
+      });
 
-      audioSource.playStream(stream_url); //https://api.soundcloud.com/tracks/41034932/stream?client_id=ba035e36f9a62aad4c3774144aec6824
     }
 
-		var buttonpushed = document.getElementById('play')
-		buttonpushed.onclick = play
+		var playButton = document.getElementById('play')
+		playButton.onclick = play
+
 
 		draw();
 
-
-
-
-		//shape parameters
+		//shape parameters written using paperjs
 		var rectanglePath = new Path.Rectangle({
 			point: [300, 200],
 			size: [400, 200],
@@ -138,6 +141,7 @@
 
 
 		var scaleOut = false
+
 function onFrame(event) {
 
 	//extra code to add in if we are changing the scale of the shapes
@@ -210,12 +214,19 @@ function onFrame(event) {
 	</head>
 
 	<body>
+	<div class="container-fluid">
 
-		<h1>Shape Visualizer</h1>
-		<form>
-			<input type="text" placeholder="place SoundCloud link here" id="soundCloudLink"></input>
-		</form>
-		<div class = "select">
+		<div class="row">
+			<h1>Shape Visualizer</h1>
+			<div class="col-sm-3 col-sm-offset-0">
+
+				<form>
+				<input type="text" class="form-control" placeholder="place SoundCloud link here" id="soundCloudLink"></input>
+				</form>
+			</div>
+		</div>
+		<div class="row">
+		<div class = "row select">
 			<select id="foo">
 	    	<option value="Square">Square</option>
 	    	<option value="Triangle">Triangle</option>
@@ -231,12 +242,14 @@ function onFrame(event) {
 			</select>
 		</select>
 		<input type="button" id = "play" value="Play">
+		<input type="button" id = "pause" value="Pause">
 
 
 		<canvas id="canvas3" width="1500" height="1000"></canvas>
 		<br>
 
 		<audio id="player"></audio>
-
+	</div>
+	</div>
 	</body>
 </html>
